@@ -8,10 +8,8 @@ esphome:
       - lambda: id(epaper_display).update();
 
 external_components:
-  - source: components/crowpanel-epaper
-    components: [ crowpanel_epaper ]
-  - source: components/espnow_receiver 
-    components: [ espnow_receiver ]
+  - source: components
+    components: [ crowpanel_epaper, espnow_receiver ]
 
 esp32:
   board: esp32-s3-devkitc-1
