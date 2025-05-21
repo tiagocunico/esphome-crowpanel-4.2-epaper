@@ -2,7 +2,7 @@ esphome:
   name: minimal-epaper-display
 
 external_components:
-  - source: github://semvis123/esphome-crowpanel-4.2-epaper@fix
+  - source: github://semvis123/esphome-crowpanel-4.2-epaper
     components: [ crowpanel_epaper ]
 
 esp32:
