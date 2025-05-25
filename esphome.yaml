@@ -78,12 +78,12 @@ display:
     rotation: 180
     lambda: |-
       if (!id(g_data_valid)) {
-        it.printf(it.get_width()/2, it.get_height()/2, id(large_font), Color::BLACK, TextAlign::CENTER, "Waiting for data...");
+        it.printf(it.get_width()/2, it.get_height()/2, id(large_font), COLOR_ON, TextAlign::CENTER, "Waiting for data...");
         return; 
       }
-      it.rectangle(0, 0, it.get_width(), it.get_height(), Color::BLACK);
-      it.printf(it.get_width()/2 - 100, 25, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0D43"); 
-      it.printf(it.get_width()/2, 25, id(large_font), Color::BLACK, TextAlign::CENTER, "Air Quality");
+      it.rectangle(0, 0, it.get_width(), it.get_height());
+      it.printf(it.get_width()/2 - 100, 25, id(icon_font), COLOR_ON, TextAlign::CENTER, "\U000F0D43"); 
+      it.printf(it.get_width()/2, 25, id(large_font), COLOR_ON, TextAlign::CENTER, "Air Quality");
       int col1_icon_x = 27; 
       int col1_text_x = col1_icon_x + 22; 
       
