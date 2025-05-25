@@ -36,33 +36,33 @@ static const uint8_t PARAM_DEEP_SLEEP_MODE = 0x01;
 // End marker is two 0xFF bytes
 
 const uint8_t display_start_sequence[] = {
-    CMD_SOFT_RESET, DELAY_FLAG, 10,                    // Soft reset and 10ms delay
-    CMD_SET_MUX, 0x03, 0x2b, 0x01, 0x00,               // Set MUX as 300
-    CMD_DISPLAY_UPDATE_CONTROL, 0x02, 0x40, 0x00,      // Display update control
-    CMD_BORDER_WAVEFORM, 0x01, PARAM_BORDER_FULL,      // Border waveform for full refresh
+  CMD_SOFT_RESET, DELAY_FLAG, 10,                    // Soft reset and 10ms delay
+  CMD_SET_MUX, 0x03, 0x2b, 0x01, 0x00,               // Set MUX as 300
+  CMD_DISPLAY_UPDATE_CONTROL, 0x02, 0x40, 0x00,      // Display update control
+  CMD_BORDER_WAVEFORM, 0x01, PARAM_BORDER_FULL,      // Border waveform for full refresh
     CMD_DATA_ENTRY_MODE, 0x01, 0x03,                   // X-mode
-    CMD_SET_X_ADDR, 0x02, 0x00, 0x31,                  // Set RAM X Address Start/End Pos (0 to 49 -> 400 pixels)
-    CMD_SET_Y_ADDR, 0x04, 0x00, 0x00, 0x2b, 0x01,      // Set RAM Y Address Start/End Pos (0 to 299 -> 300 pixels)
-    CMD_SET_X_COUNTER, 0x01, 0x00,                     // Set RAM X Address counter
-    CMD_SET_Y_COUNTER, 0x02, 0x00, 0x00,               // Set RAM Y Address counter
-    COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
+  CMD_SET_X_ADDR, 0x02, 0x00, 0x31,                  // Set RAM X Address Start/End Pos (0 to 49 -> 400 pixels)
+  CMD_SET_Y_ADDR, 0x04, 0x00, 0x00, 0x2b, 0x01,      // Set RAM Y Address Start/End Pos (0 to 299 -> 300 pixels)
+  CMD_SET_X_COUNTER, 0x01, 0x00,                     // Set RAM X Address counter
+  CMD_SET_Y_COUNTER, 0x02, 0x00, 0x00,               // Set RAM Y Address counter
+  COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
 };
 
 const uint8_t display_stop_sequence[] = {
-    CMD_DEEP_SLEEP, 0x01, PARAM_DEEP_SLEEP_MODE,       // Deep sleep mode
-    COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
+  CMD_DEEP_SLEEP, 0x01, PARAM_DEEP_SLEEP_MODE,       // Deep sleep mode
+  COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
 };
 
 const uint8_t full_refresh_sequence[] = {
-    CMD_UPDATE_SEQUENCE, 0x01, PARAM_FULL_UPDATE,      // Display update sequence option (full)
-    CMD_DISPLAY_UPDATE, DELAY_FLAG, 10,                // Master activation with 10ms delay
-    COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
+  CMD_UPDATE_SEQUENCE, 0x01, PARAM_FULL_UPDATE,      // Display update sequence option (full)
+  CMD_DISPLAY_UPDATE, DELAY_FLAG, 10,                // Master activation with 10ms delay
+  COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
 };
 
 const uint8_t partial_refresh_sequence[] = {
-    CMD_UPDATE_SEQUENCE, 0x01, PARAM_PARTIAL_UPDATE,   // Display update sequence option (partial)
-    CMD_DISPLAY_UPDATE, DELAY_FLAG, 10,                // Master activation with 10ms delay
-    COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
+  CMD_UPDATE_SEQUENCE, 0x01, PARAM_PARTIAL_UPDATE,   // Display update sequence option (partial)
+  CMD_DISPLAY_UPDATE, DELAY_FLAG, 10,                // Master activation with 10ms delay
+  COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
 };
 
 // ========================================================
@@ -216,7 +216,7 @@ void CrowPanelEPaperBase::setup() {
   uint32_t buffer_size = this->get_buffer_length_();
   this->init_internal_(buffer_size);
   
-  this->fill(Color::WHITE);
+  this->fill(display::COLOR_OFF);
   this->setup_pins_();
   
   // Start initialization state machine
@@ -311,7 +311,7 @@ void CrowPanelEPaperBase::loop() {
                  this->is_full_update_ ? "FULL" : "PARTIAL", this->update_count_);
       
       // Clear buffer to white first
-      this->fill(Color::WHITE);
+      this->fill(display::COLOR_OFF);
       
       // Execute the lambda (if set) - this draws text, shapes, etc.
       if (this->writer_.has_value()) {
@@ -498,9 +498,10 @@ void CrowPanelEPaper::draw_absolute_pixel_internal(int x, int y, Color color) {
   }
 
   // Write pixel
-  if (!color.is_on()) { // BLACK pixel
+  // Since this is an EPD, on is black and off is white.
+  if (color.is_on()) {
     this->buffer_[byte_offset] &= ~(1 << bit_offset);
-  } else { // WHITE pixel
+  } else {
     this->buffer_[byte_offset] |= (1 << bit_offset);
   }
 }
@@ -578,4 +579,3 @@ void CrowPanelEPaper4P2In::dump_config() {
 
 }  // namespace crowpanel_epaper
 }  // namespace esphome
-
