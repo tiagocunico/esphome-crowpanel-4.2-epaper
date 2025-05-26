@@ -314,7 +314,9 @@ void CrowPanelEPaperBase::loop() {
       this->fill(display::COLOR_OFF);
       
       // Execute the lambda (if set) - this draws text, shapes, etc.
-      if (this->writer_.has_value()) {
+      if (this->page_ != nullptr) {
+        this->page_->get_writer()(*this);
+      } else if (this->writer_.has_value()) {
         (*this->writer_)(*this);
       }
       
@@ -456,8 +458,8 @@ int CrowPanelEPaper::get_height_internal() {
 }
 
 void CrowPanelEPaper::fill(Color color) {
-  const uint8_t fill = !color.is_on() ? 0x00 : 0xFF;
-  ESP_LOGD(TAG, "Filling buffer with %s", !color.is_on() ? "BLACK" : "WHITE");
+  const uint8_t fill = color.is_on() ? 0x00 : 0xFF;
+  ESP_LOGD(TAG, "Filling buffer with %s", color.is_on() ? "BLACK" : "WHITE");
   
   if (this->get_buffer_length_() == 0 || this->buffer_ == nullptr) {
     ESP_LOGE(TAG, "ERROR: Buffer not initialized");
