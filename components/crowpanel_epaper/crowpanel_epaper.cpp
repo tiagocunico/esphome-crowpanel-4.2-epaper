@@ -23,12 +23,20 @@ static const uint8_t CMD_SET_X_COUNTER = 0x4E;
 static const uint8_t CMD_SET_Y_COUNTER = 0x4F;
 static const uint8_t CMD_SET_MUX = 0x01;
 
+// Explicit target selection when the SSD1683 is used in cascade mode.
+static const uint8_t CMD_TARGET_PRIMARY = 0x00;
+static const uint8_t CMD_TARGET_SECONDARY = 0x80;
+
 // SSD1683 EPD Driver chip command parameters
 static const uint8_t PARAM_BORDER_FULL = 0x05;
 static const uint8_t PARAM_BORDER_PARTIAL = 0x80;
 static const uint8_t PARAM_FULL_UPDATE = 0xF7;
 static const uint8_t PARAM_PARTIAL_UPDATE = 0xFF;
 static const uint8_t PARAM_DEEP_SLEEP_MODE = 0x01;
+static const uint8_t PARAM_X_INC_Y_INC = 0x03; // left-right, top-down
+static const uint8_t PARAM_X_DEC_Y_INC = 0x02; // right-left, top-down
+static const uint8_t PARAM_SEL_SINGLE_CHIP = 0x00;
+static const uint8_t PARAM_SEL_CASCADE = 0x10;
 
 // SSD1683 EPD Driver chip command sequences
 // Format: command, num_args, arg1, arg2...
@@ -36,16 +44,30 @@ static const uint8_t PARAM_DEEP_SLEEP_MODE = 0x01;
 // End marker is two 0xFF bytes
 
 const uint8_t display_start_sequence[] = {
-  CMD_SOFT_RESET, DELAY_FLAG, 10,                    // Soft reset and 10ms delay
-  CMD_SET_MUX, 0x03, 0x2b, 0x01, 0x00,               // Set MUX as 300
-  CMD_DISPLAY_UPDATE_CONTROL, 0x02, 0x40, 0x00,      // Display update control
-  CMD_BORDER_WAVEFORM, 0x01, PARAM_BORDER_FULL,      // Border waveform for full refresh
-    CMD_DATA_ENTRY_MODE, 0x01, 0x03,                   // X-mode
-  CMD_SET_X_ADDR, 0x02, 0x00, 0x31,                  // Set RAM X Address Start/End Pos (0 to 49 -> 400 pixels)
-  CMD_SET_Y_ADDR, 0x04, 0x00, 0x00, 0x2b, 0x01,      // Set RAM Y Address Start/End Pos (0 to 299 -> 300 pixels)
-  CMD_SET_X_COUNTER, 0x01, 0x00,                     // Set RAM X Address counter
-  CMD_SET_Y_COUNTER, 0x02, 0x00, 0x00,               // Set RAM Y Address counter
-  COMMAND_END_MARKER, COMMAND_END_MARKER             // End marker
+  CMD_SOFT_RESET, DELAY_FLAG, 10,                                // Soft reset and 10ms delay
+  CMD_SET_MUX, 0x03, 0x2b, 0x01, 0x00,                           // Set MUX as 300
+  CMD_DISPLAY_UPDATE_CONTROL, 0x02, 0x40, PARAM_SEL_SINGLE_CHIP, // Display update control
+  CMD_BORDER_WAVEFORM, 0x01, PARAM_BORDER_FULL,                  // Border waveform for full refresh
+  CMD_DATA_ENTRY_MODE, 0x01, PARAM_X_INC_Y_INC,                  // Data entry mode (X+ Y+)
+  CMD_SET_X_ADDR, 0x02, 0x00, 0x31,                              // Set RAM X Address Start/End Pos (0 to 49 -> 400 pixels)
+  CMD_SET_Y_ADDR, 0x04, 0x00, 0x00, 0x2b, 0x01,                  // Set RAM Y Address Start/End Pos (0 to 299 -> 300 pixels)
+  CMD_SET_X_COUNTER, 0x01, 0x00,                                 // Set RAM X Address counter
+  CMD_SET_Y_COUNTER, 0x02, 0x00, 0x00,                           // Set RAM Y Address counter
+  COMMAND_END_MARKER, COMMAND_END_MARKER                         // End marker
+};
+
+const uint8_t display_start_sequence_5p79in[] = {
+  CMD_SOFT_RESET, DELAY_FLAG, 10,                        // Soft reset and 10ms delay
+  // Do not set MUX. Not sure why, but it causes issues with the 5.79in display.
+  // Set up the RAM area for the primary controller
+  CMD_DATA_ENTRY_MODE | CMD_TARGET_PRIMARY, 0x01, PARAM_X_INC_Y_INC, // This panel goes from left to right.
+  CMD_SET_X_ADDR | CMD_TARGET_PRIMARY, 0x02, 0x00, 0x31,             // Set RAM X Address Start/End Pos (0 to 49 -> 400 pixels)
+  CMD_SET_Y_ADDR | CMD_TARGET_PRIMARY, 0x04, 0x00, 0x00, 0x0f, 0x01, // Set RAM Y Address Start/End Pos (0 to 271 -> 272 pixels)
+  // Set up the RAM area for the secondary controller
+  CMD_DATA_ENTRY_MODE | CMD_TARGET_SECONDARY, 0x01, PARAM_X_DEC_Y_INC, // This panel goes from right to left.
+  CMD_SET_X_ADDR | CMD_TARGET_SECONDARY, 0x02, 0x31, 0x00,             // Set RAM X Address Start/End Pos (49 to 0 -> 400 pixels)
+  CMD_SET_Y_ADDR | CMD_TARGET_SECONDARY, 0x04, 0x00, 0x00, 0x0f, 0x01, // Set RAM Y Address Start/End Pos (0 to 271 -> 272 pixels)
+  COMMAND_END_MARKER, COMMAND_END_MARKER                 // End marker
 };
 
 const uint8_t display_stop_sequence[] = {
@@ -148,8 +170,9 @@ void CrowPanelEPaperBase::send_command_sequence_(const uint8_t* sequence) {
     // Check if this command has a delay parameter
     if (num_args & DELAY_FLAG) {
       // This is a delay command, skip the delay value
-      // The actual delay is handled by the state machine
-      i++;
+      // TODO: The delay should be handled by the state machine 
+      uint8_t delay_ms = sequence[i++];
+      delay(delay_ms);
       // Continue sending commands (don't break)
       num_args &= ARG_COUNT_MASK; // Clear delay bit for arg count
     }
@@ -335,28 +358,19 @@ void CrowPanelEPaperBase::loop() {
       this->state_ = EpdState::UPDATE_SENDING_DATA;
       this->state_start_time_ = now;
       break;
-    case EpdState::UPDATE_SENDING_DATA: {
-      // Send a chunk of data per loop
-      const size_t CHUNK_SIZE = 32;
-      size_t buffer_len = this->get_buffer_length_();
-      size_t i = this->data_send_index_;
-      size_t end = (i + CHUNK_SIZE < buffer_len) ? (i + CHUNK_SIZE) : buffer_len;
-      for (; i < end; ++i) {
-        this->write_byte_soft_spi(this->buffer_[i]);
+    case EpdState::UPDATE_SENDING_DATA:
+      this->update_send_data_(now);
+      break;
+    case EpdState::UPDATE_REFRESH: {
+      // Send refresh command based on update mode
+      UpdateMode mode = this->is_full_update_ ? UpdateMode::FULL : UpdateMode::PARTIAL;
+      if (mode == UpdateMode::FULL) {
+        this->send_command_sequence_(full_refresh_sequence);
+      } else {
+        this->send_command_sequence_(partial_refresh_sequence);
       }
-      this->data_send_index_ = end;
-      if (this->data_send_index_ >= buffer_len) {
-        this->end_data_();
-        // Send refresh command based on update mode
-        UpdateMode mode = this->is_full_update_ ? UpdateMode::FULL : UpdateMode::PARTIAL;
-        if (mode == UpdateMode::FULL) {
-          this->send_command_sequence_(full_refresh_sequence);
-        } else {
-          this->send_command_sequence_(partial_refresh_sequence);
-        }
-        this->state_ = EpdState::UPDATE_WAIT_REFRESH;
-        this->state_start_time_ = now;
-      }
+      this->state_ = EpdState::UPDATE_WAIT_REFRESH;
+      this->state_start_time_ = now;
       break;
     }
     case EpdState::UPDATE_WAIT_REFRESH:
@@ -373,6 +387,23 @@ void CrowPanelEPaperBase::loop() {
     case EpdState::DEEP_SLEEP:
       // Stay in deep sleep state
       break;
+  }
+}
+
+void CrowPanelEPaperBase::update_send_data_(uint32_t now) {
+  // Send a chunk of data per loop
+  const size_t CHUNK_SIZE = 32;
+  size_t buffer_len = this->get_buffer_length_();
+  size_t i = this->data_send_index_;
+  size_t end = (i + CHUNK_SIZE < buffer_len) ? (i + CHUNK_SIZE) : buffer_len;
+  for (; i < end; ++i) {
+    this->write_byte_soft_spi(this->buffer_[i]);
+  }
+  this->data_send_index_ = end;
+  if (this->data_send_index_ >= buffer_len) {
+    this->end_data_();
+    this->state_ = EpdState::UPDATE_REFRESH;
+    this->state_start_time_ = now;
   }
 }
 
@@ -465,9 +496,7 @@ void CrowPanelEPaper::fill(Color color) {
     ESP_LOGE(TAG, "ERROR: Buffer not initialized");
     return;
   }
-  
-  for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
-    this->buffer_[i] = fill;
+  std::memset(this->buffer_, fill, this->get_buffer_length_());
 }
 
 void CrowPanelEPaper::draw_absolute_pixel_internal(int x, int y, Color color) {
@@ -530,7 +559,7 @@ void CrowPanelEPaper4P2In::prepare_for_update_(UpdateMode mode) {
     // Additional display update control settings 
     this->command(CMD_DISPLAY_UPDATE_CONTROL);
     this->data(0x40);
-    this->data(0x00);
+    this->data(PARAM_SEL_SINGLE_CHIP);
   } else {
     ESP_LOGD(TAG, "Preparing for PARTIAL update mode");
     
@@ -541,7 +570,7 @@ void CrowPanelEPaper4P2In::prepare_for_update_(UpdateMode mode) {
     // Additional settings for partial update
     this->command(CMD_DISPLAY_UPDATE_CONTROL);
     this->data(0x00);
-    this->data(0x00);
+    this->data(PARAM_SEL_SINGLE_CHIP);
   }
 }
 
@@ -573,6 +602,148 @@ void CrowPanelEPaper4P2In::deep_sleep() {
 void CrowPanelEPaper4P2In::dump_config() {
   LOG_DISPLAY("", "CrowPanel E-Paper", this);
   ESP_LOGCONFIG(TAG, "  Model: 4.2in");
+  LOG_PIN("  Reset Pin: ", this->reset_pin_);
+  LOG_PIN("  DC Pin: ", this->dc_pin_);
+  LOG_PIN("  Busy Pin: ", this->busy_pin_);
+  LOG_UPDATE_INTERVAL(this);
+}
+
+// ========================================================================
+// CrowPanelEPaper5P79In Implementation (5.79" B/W display)
+//
+// This model uses the cascade mode of the SSD1683 to chain two controllers
+// together. The left half (closest to the connector) is the primary
+// controller.
+// ========================================================================
+
+void CrowPanelEPaper5P79In::initialize() {
+  ESP_LOGD(TAG, "Initializing CrowPanel 5.79in display");
+
+  // Send initialization sequence using the predefined commands
+  this->send_command_sequence_(display_start_sequence_5p79in);
+}
+
+void CrowPanelEPaper5P79In::prepare_for_update_(UpdateMode mode) {
+  if (mode == UpdateMode::FULL) {
+    ESP_LOGD(TAG, "Preparing for FULL update mode");
+    
+    // Set BorderWavefrom for full refresh
+    this->command(CMD_BORDER_WAVEFORM);
+    this->data(PARAM_BORDER_FULL);
+    
+    // Additional display update control settings 
+    this->command(CMD_DISPLAY_UPDATE_CONTROL);
+    this->data(0x40);
+    this->data(PARAM_SEL_CASCADE);
+  } else {
+    ESP_LOGD(TAG, "Preparing for PARTIAL update mode");
+    
+    // Set BorderWavefrom for partial refresh
+    this->command(CMD_BORDER_WAVEFORM);
+    this->data(PARAM_BORDER_PARTIAL);
+    
+    // Additional settings for partial update
+    this->command(CMD_DISPLAY_UPDATE_CONTROL);
+    this->data(0x00);
+    this->data(PARAM_SEL_CASCADE);
+  }
+}
+
+void CrowPanelEPaper5P79In::display() {
+  ESP_LOGD(TAG, "E-Paper display refresh starting");
+  // Set the display mode based on update type
+  UpdateMode mode = this->is_full_update_ ? UpdateMode::FULL : UpdateMode::PARTIAL;
+  this->prepare_for_update_(mode);
+  // Reset RAM address counters before writing data
+  // Primary controller (start from top-left)
+  this->command(CMD_SET_X_COUNTER | CMD_TARGET_PRIMARY);
+  this->data(0x00);
+  this->command(CMD_SET_Y_COUNTER| CMD_TARGET_PRIMARY);
+  this->data(0x00);
+  this->data(0x00);
+  // Secondary controller (start from top-right)
+  this->command(CMD_SET_X_COUNTER | CMD_TARGET_SECONDARY);
+  this->data(0x31); // 49b -> 400px
+  this->command(CMD_SET_Y_COUNTER | CMD_TARGET_SECONDARY);
+  this->data(0x00);
+  this->data(0x00);
+
+  // Start by filling the primary controller's RAM
+  this->cascade_state_ = EpdCascadeState::PRIMARY;
+  this->data_send_index_ = 0;
+  this->data_send_x_offset_ = 0;
+  this->command(CMD_WRITE_RAM | CMD_TARGET_PRIMARY);
+  this->start_data_();
+}
+
+void CrowPanelEPaper5P79In::update_send_data_(uint32_t now) {
+  // We can easily send 2 rows of data without exceeding the 30ms limit.
+  constexpr size_t chunk_size = 2u * (NATIVE_WIDTH_5P79IN / 2u);
+  constexpr uint16_t width_bytes = NATIVE_WIDTH_5P79IN / 8u;
+  // It's important to round up here!
+  constexpr uint16_t x_offset_end = (width_bytes + 1u) / 2u;
+  // And here it's important to round down.
+  constexpr uint16_t x_offset_start = width_bytes / 2u;
+
+  // The logic here is slightly more complex than for the 4.2in display because we have to deal
+  // with two controllers, each with its own buffer. Worse, they even have an overlap in the middle.
+  // Luckily for us, we can just write the 8-bit overlap data to both controllers and it will work
+  // fine. That's why the rounding is important above.
+  //
+  // The rest is a pretty straight-forward 2D traversal of the buffer. We do it in 2 dimensions
+  // because the buffer's layout would force us to switch controllers right in the middle of a row,
+  // which is not ideal. Instead we first write the left half of the buffer to the primary
+  // controller, then switch to the secondary controller and write the right half of the buffer.
+
+  // For the secondary controller, read from the right half of the buffer.
+  uint16_t x_start = (this->cascade_state_ == EpdCascadeState::PRIMARY) ? 0 : x_offset_start;
+
+  bool done = false;
+  for (size_t i = 0; i < chunk_size; ++i) {
+    size_t index = this->data_send_index_ * width_bytes + x_start + this->data_send_x_offset_;
+    assert(index < this->get_buffer_length_());
+    this->write_byte_soft_spi(this->buffer_[index]);
+
+    ++this->data_send_x_offset_;
+    if (this->data_send_x_offset_ >= x_offset_end) {
+      this->data_send_x_offset_ = 0u;
+      ++this->data_send_index_;
+      if (this->data_send_index_ >= this->get_native_height_()) {
+        done = true;
+        break;
+      }
+    }
+  }
+  // Still writing data...
+  if (!done) return;
+
+  // The current transfer is done.
+  this->end_data_();
+  if (this->cascade_state_ == EpdCascadeState::PRIMARY) {
+    // We finished the primary controller's data, let's switch to the secondary controller.
+    this->cascade_state_ = EpdCascadeState::SECONDARY;
+    this->data_send_index_ = 0;
+    this->data_send_x_offset_ = 0;
+    this->command(CMD_WRITE_RAM | CMD_TARGET_SECONDARY);
+    this->start_data_();
+    return;
+  }
+
+  // We're done with both controllers.
+  this->state_ = EpdState::UPDATE_REFRESH;
+  this->state_start_time_ = now;
+}
+
+void CrowPanelEPaper5P79In::deep_sleep() {
+  ESP_LOGD(TAG, "Entering deep sleep mode");
+  
+  // Send deep sleep sequence
+  this->send_command_sequence_(display_stop_sequence);
+}
+
+void CrowPanelEPaper5P79In::dump_config() {
+  LOG_DISPLAY("", "CrowPanel E-Paper", this);
+  ESP_LOGCONFIG(TAG, "  Model: 5.79in");
   LOG_PIN("  Reset Pin: ", this->reset_pin_);
   LOG_PIN("  DC Pin: ", this->dc_pin_);
   LOG_PIN("  Busy Pin: ", this->busy_pin_);
