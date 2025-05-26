@@ -314,7 +314,9 @@ void CrowPanelEPaperBase::loop() {
       this->fill(display::COLOR_OFF);
       
       // Execute the lambda (if set) - this draws text, shapes, etc.
-      if (this->writer_.has_value()) {
+      if (this->page_ != nullptr) {
+        this->page_->get_writer()(*this);
+      } else if (this->writer_.has_value()) {
         (*this->writer_)(*this);
       }
       
