@@ -44,7 +44,7 @@ static const uint8_t PARAM_SEL_CASCADE = 0x10;
 // End marker is two 0xFF bytes
 
 const uint8_t display_start_sequence[] = {
-  CMD_SOFT_RESET, DELAY_FLAG, 10,                                // Soft reset and 10ms delay
+  CMD_SOFT_RESET,                                                // Soft reset
   CMD_SET_MUX, 0x03, 0x2b, 0x01, 0x00,                           // Set MUX as 300
   CMD_DISPLAY_UPDATE_CONTROL, 0x02, 0x40, PARAM_SEL_SINGLE_CHIP, // Display update control
   CMD_BORDER_WAVEFORM, 0x01, PARAM_BORDER_FULL,                  // Border waveform for full refresh
@@ -173,6 +173,7 @@ void CrowPanelEPaperBase::send_command_sequence_(const uint8_t* sequence) {
       // TODO: The delay should be handled by the state machine 
       uint8_t delay_ms = sequence[i++];
       delay(delay_ms);
+      // i++;
       // Continue sending commands (don't break)
       num_args &= ARG_COUNT_MASK; // Clear delay bit for arg count
     }
