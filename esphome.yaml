@@ -52,9 +52,9 @@ display:
     full_update_every: 10
     rotation: 180
     lambda: |-
-      it.printf(it.get_width()/2, it.get_height()/2, id(large_font), Color::BLACK, TextAlign::CENTER, "Hello World!");
-      it.printf(it.get_width()/2, it.get_height()/4, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F01E7");
-      it.printf(it.get_width()/2, 3*it.get_height()/4, id(roboto_regular), Color::BLACK, TextAlign::CENTER, "Counter: %d", id(simple_counter));
+      it.printf(it.get_width()/2, it.get_height()/2, id(large_font), TextAlign::CENTER, "Hello World!");
+      it.printf(it.get_width()/2, it.get_height()/4, id(icon_font), TextAlign::CENTER, "\U000F01E7");
+      it.printf(it.get_width()/2, 3*it.get_height()/4, id(roboto_regular), TextAlign::CENTER, "Counter: %d", id(simple_counter));
       id(simple_counter) += 1;
 
 switch:
