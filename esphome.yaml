@@ -1,5 +1,5 @@
 esphome:
-  name: sensor-display-receiver
+  name: e-paper
   on_boot:
     then:
       - logger.log: "ESPHome boot complete. Enabling display power and triggering refresh."
@@ -9,7 +9,7 @@ esphome:
 
 external_components:
   - source: components
-    components: [ crowpanel_epaper, espnow_receiver ]
+    components: [ crowpanel_epaper]
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -20,47 +20,142 @@ logger:
   hardware_uart: UART0
 
 api:
+  encryption:
+    key: "DCBcwIRMiEP0YS6HLqw9ow4wUEiMo5I06ADQ4mTAR8s="
 
 ota:
-  platform: esphome
+  - platform: esphome
+    password: "c0decdc92e07bcffe58861774d04fd6a"
 
 wifi:
-  ssid: "change me"
-  password: "change me"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
   ap:
-    ssid: "Sensor Display Fallback"
-    password: "CHANGEME123"
+    ssid: "E-Paper Fallback Hotspot"
+    password: "806xalgPYYgs"
+
 
 font:
-  - file: "Roboto-Regular.ttf"
-    id: roboto_regular
-    size: 20
-  
-  - file: "Roboto-Regular.ttf"
-    id: large_font
-    size: 36
-    
-  - file: "Roboto-Regular.ttf"
-    id: small_font
-    size: 16
-    
-  - file: "materialdesignicons-webfont.ttf"
-    id: icon_font
-    size: 24
+  - file: 'fonts/OpenSans-Medium.ttf'
+    id: font_small
+    size: 28
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Medium.ttf'
+    id: font_medium
+    size: 38
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Bold.ttf'
+    id: font_medium_bold
+    size: 38
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Medium.ttf'
+    id: font_big
+    size: 48
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Bold.ttf'
+    id: font_big_bold
+    size: 48
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Medium.ttf'
+    id: font_large
+    size: 56
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Bold.ttf'
+    id: font_large_bold
+    size: 56
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Bold.ttf'
+    id: font_xlarge_bold
+    size: 72
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  # material UI icons - from https://pictogrammers.github.io/@mdi/font/5.3.45/
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_icons
+    size: 50
     glyphs:
-      - "\U000F0D43"
-      - "\U000F07E4"
-      - "\U000F0BAC"
-      - "\U000F050F"
-      - "\U000F058E"
-      - "\U000F0093"
-      - "\U000F0647"
-      - "\U000F05E0"
-      - "\U000F0028"
-      - "\U000F0159"
-      - "\U000F0450"
-      - "\U000F05A9"
-      - "\U000F0150"
+      - "\U000F0594" # clear-night
+      - "\U000F0590" # cloudy
+      - "\U000F0591" # fog
+      - "\U000F0592" # hail
+      - "\U000F0593" # lightning
+      - "\U000F067E" # lightning-rainy
+      - "\U000F0F31" # night-partly-cloudy
+      - "\U000F0595" # partly-cloudy
+      - "\U000F0596" # pouring
+      - "\U000F0597" # rainy
+      - "\U000F0F36" # snowy
+      - "\U000F067F" # snowy-rainy
+      - "\U000F0599" # sunny
+      - "\U000F059D" # windy
+      - "\U000F059E" # windy-variant
+      - "\U000F0F38" # exCentereptional
+      - "\U000F02DC" # Casa
+      - "\U000F0F9B" # Fora
+      - "\U000F058E" # Humi
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_icons_small
+    size: 50
+    glyphs:
+      # weather
+      - "\U000F0594" # clear-night
+      - "\U000F0590" # cloudy
+      - "\U000F0591" # fog
+      - "\U000F0592" # hail
+      - "\U000F0593" # lightning
+      - "\U000F067E" # lightning-rainy
+      - "\U000F0F31" # night-partly-cloudy
+      - "\U000F0595" # partly-cloudy
+      - "\U000F0596" # pouring
+      - "\U000F0597" # rainy
+      - "\U000F0F36" # snowy
+      - "\U000F067F" # snowy-rainy
+      - "\U000F0599" # sunny
+      - "\U000F059D" # windy
+      - "\U000F059E" # windy-variant
+      - "\U000F0F38" # exceptional
+      # moon phases
+      - "\U000F0F61" # moon-first-quarter
+      - "\U000F0F62" # moon-full
+      - "\U000F0F63" # moon-last-quarter
+      - "\U000F0F64" # moon-new
+      - "\U000F0F65" # moon-waning-crescent
+      - "\U000F0F66" # moon-waning-gibbous
+      - "\U000F0F67" # moon-waxing-crescent
+      - "\U000F0F68" # moon-waxing-gibbous
+      # other icons
+      - "\U000F10C2" # Temperature High
+      - "\U000F10C3" # Temperature Low
+      - "\U000F054B" # umbrella
+      - "\U000F02E3" # Bed
+      - "\U000F064D" # human-male
+      - "\U000F0649" # human-female
+      - "\U000F04B9" # sofa
+      - "\U000F04DB" # stop
+      - "\U000F040A" # play
+      - "\U000F03E4" # pause
+      - "\U000F0643" # man
+      - "\U000F1078" # woman
+      - "\U000F0E7C" # baby-face
+      - "\U000F0379" # monitor
+      - "\U000F07E4" # CO2
+      
+      
+  - file: 'fonts/materialdesignicons-webfont.ttf'
+    id: font_icons_tiny
+    size: 32
+    glyphs:
+      - "\U000F005E" # arrow-up-thick
+      - "\U000F0046" # arrow-down-thick
+      - "\U000F059C" # Sunrise
+      - "\U000F059B" # Sunset
 
 
 display:
@@ -74,147 +169,65 @@ display:
     reset_pin: 47
     busy_pin: 48
     update_interval: 10s
-    full_update_every: 10
+    full_update_every: 60
     rotation: 180
     lambda: |-
-      if (!id(g_data_valid)) {
-        it.printf(it.get_width()/2, it.get_height()/2, id(large_font), COLOR_ON, TextAlign::CENTER, "Waiting for data...");
-        return; 
-      }
-      it.rectangle(0, 0, it.get_width(), it.get_height());
-      it.printf(it.get_width()/2 - 100, 25, id(icon_font), COLOR_ON, TextAlign::CENTER, "\U000F0D43"); 
-      it.printf(it.get_width()/2, 25, id(large_font), COLOR_ON, TextAlign::CENTER, "Air Quality");
-      int col1_icon_x = 27; 
-      int col1_text_x = col1_icon_x + 22; 
+    
+      // icon constants
+      #define ICON_temp_high        "\U000F10C2"
+      #define ICON_temp_low         "\U000F10C3"
+      #define ICON_umbrella         "\U000F054B"
+      #define ICON_bed              "\U000F02E3"
+      #define ICON_human_male       "\U000F064D"
+      #define ICON_human_female     "\U000F0649"
+      #define ICON_monitor          "\U000F0379"
+      #define ICON_sofa             "\U000F04B9"
+      #define ICON_man              "\U000F0643"
+      #define ICON_woman            "\U000F1078"
+      #define ICON_baby             "\U000F0E7C"
+      #define ICON_up               "\U000F005E"
+      #define ICON_down             "\U000F0046"
+      #define ICON_sunrise          "\U000F059C"
+      #define ICON_sunset           "\U000F059B"
+      #define ICON_Casa             "\U000F02DC"
+      #define ICON_Fora             "\U000F0F9B"
+      #define ICON_Humidade         "\U000F058E"
+      #define ICON_CO2              "\U000F07E4"
       
-      int col2_icon_x = it.get_width()/2 + 27; 
-      int col2_text_x = col2_icon_x + 22; 
+      int x_Temp = -11;
+      int y_Temp = 50;
+      int y_Offset_Humi = 50;
+      int y_Offset_CO2 = 40;
       
-      int start_y = 75;           
-      int row_spacing = 35;       
+      it.rectangle(0, 0, it.get_width(), it.get_height()-1);
       
-      int overall_status = 0; 
-      auto check_metric = [&](float value, float good_threshold, float moderate_threshold) {
-        int current_status = 0;
-        if (value > moderate_threshold) {
-          current_status = 2; 
-        } else if (value > good_threshold) {
-          current_status = 1; 
-        }
-        if (current_status > overall_status) {
-          overall_status = current_status;
-        }
-      };
-      check_metric(id(g_pm2_5), 12, 35.4);
-      check_metric(id(g_pm10), 54, 154);
-      check_metric(id(g_co2), 800, 1200);
-      check_metric(id(g_voc), 2, 3); 
-      check_metric(id(g_ch2o), 0.08, 0.1);
-      check_metric(id(g_co), 4.4, 9.4);
-      check_metric(id(g_o3), 54, 70);
-      check_metric(id(g_no2), 0.04, 0.1);
+      auto time = id(esptime).now();
+      it.strftime(it.get_width(), 0, id(font_medium), TextAlign::RIGHT, "%H:%M", time);
       
-
       
-      int status_icon_x = it.get_width()/2 + 100; 
-      if (overall_status == 0) {
-        it.printf(status_icon_x, 25, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F05E0"); 
-      } else if (overall_status == 1) {
-        it.printf(status_icon_x, 25, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0028"); 
-      } else {
-        it.printf(status_icon_x, 25, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0159"); 
-      }
-
+      it.printf(x_Temp+50, 5, id(font_icons), TextAlign::LEFT, ICON_Casa); 
+      it.printf(x_Temp+140, 5, id(font_icons), TextAlign::LEFT, ICON_Fora); 
       
-      it.printf(col1_icon_x, start_y, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0D43"); 
-      it.printf(col1_text_x, start_y - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "PM1.0: %d ug/m3", id(g_pm1_0)); 
+      it.printf(x_Temp, y_Temp-3, id(font_icons_small), TextAlign::LEFT, ICON_temp_high); 
+      it.printf(x_Temp+50, y_Temp, id(font_small), TextAlign::LEFT, "%.1f", id(temperatureEA).state);// °C
+      it.printf(x_Temp+135, y_Temp, id(font_small), TextAlign::LEFT, "%.1f", id(TempFora).state);
       
-      it.printf(col1_icon_x, start_y + row_spacing, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0D43"); 
-      it.printf(col1_text_x, start_y + row_spacing - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "PM2.5: %d ug/m3", id(g_pm2_5)); 
+      it.printf(x_Temp+3, y_Temp-5+y_Offset_Humi, id(font_icons), TextAlign::LEFT, ICON_Humidade); 
+      it.printf(x_Temp+65, y_Temp+y_Offset_Humi, id(font_small), TextAlign::LEFT, "%.0f", id(UmidadeEA).state);// °C
+      it.printf(x_Temp+150, y_Temp+y_Offset_Humi, id(font_small), TextAlign::LEFT, "%.0f", id(UmiFora).state);
       
-      it.printf(col1_icon_x, start_y + row_spacing*2, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0D43"); 
-      it.printf(col1_text_x, start_y + row_spacing*2 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "PM10: %d ug/m3", id(g_pm10)); 
-      it.printf(col1_icon_x, start_y + row_spacing*3, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F07E4"); 
-      it.printf(col1_text_x, start_y + row_spacing*3 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "CO2: %d ppm", id(g_co2)); 
+      it.printf(x_Temp+10, y_Temp-5+y_Offset_Humi+y_Offset_CO2, id(font_icons_small), TextAlign::LEFT, ICON_CO2); 
+      it.printf(x_Temp+65, y_Temp+y_Offset_Humi+y_Offset_CO2, id(font_small), TextAlign::LEFT, "%.0f", id(co2_ea).state);// °C
+      it.printf(x_Temp+150, y_Temp+y_Offset_Humi+y_Offset_CO2, id(font_small), TextAlign::LEFT, "%.0f", 0);
       
-      it.printf(col1_icon_x, start_y + row_spacing*4, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0BAC"); 
-      it.printf(col1_text_x, start_y + row_spacing*4 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "VOC: %d", id(g_voc));
-
-      it.printf(col1_icon_x, start_y + row_spacing*5, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0093"); 
-      it.printf(col1_text_x, start_y + row_spacing*5 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "CH2O: %.3f mg/m3", id(g_ch2o)); 
-
-      it.printf(col2_icon_x, start_y, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F050F"); 
-      it.printf(col2_text_x, start_y - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "Temp: %.1f °C", id(g_temperature)); 
       
-      it.printf(col2_icon_x, start_y + row_spacing, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F058E"); 
-      it.printf(col2_text_x, start_y + row_spacing - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "Humid: %d%%", id(g_humidity)); 
-      
-      it.printf(col2_icon_x, start_y + row_spacing*2, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0093"); 
-      it.printf(col2_text_x, start_y + row_spacing*2 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "NO2: %.2f ppm", id(g_no2)); 
-      
-      it.printf(col2_icon_x, start_y + row_spacing*3, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0647"); 
-      it.printf(col2_text_x, start_y + row_spacing*3 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "CO: %.1f ppm", id(g_co)); 
-      
-      it.printf(col2_icon_x, start_y + row_spacing*4, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0BAC"); 
-      it.printf(col2_text_x, start_y + row_spacing*4 - 13, id(roboto_regular), Color::BLACK, TextAlign::LEFT, "O3: %.2f ppb", id(g_o3)); 
-      
-      int footer_y = it.get_height() - 20; 
-      if (id(wifi_connected_status).state) {
-        it.printf(it.get_width()/2 + 50, footer_y, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F05A9"); 
-      }
-      if (id(esptime).now().is_valid()) {
-        int time_text_x = it.get_width()/2;
-        int time_icon_x = time_text_x - 50; 
-        it.printf(time_icon_x, footer_y, id(icon_font), Color::BLACK, TextAlign::CENTER, "\U000F0150"); 
-        it.printf(time_text_x, footer_y, id(small_font), Color::BLACK, TextAlign::CENTER, 
-                "%02d:%02d", 
-                id(esptime).now().hour, id(esptime).now().minute, id(esptime).now().second);
-      }
+     
 
 globals:
   - id: g_pm1_0
     type: int
-    restore_value: no
-  - id: g_pm2_5
-    type: int
-    restore_value: no
-  - id: g_pm10
-    type: int
-    restore_value: no
-  - id: g_co2
-    type: int
-    restore_value: no
-  - id: g_voc
-    type: int
-    restore_value: no
-  - id: g_temperature
-    type: float
-    restore_value: no
-  - id: g_humidity
-    type: int
-    restore_value: no
-  - id: g_ch2o
-    type: float
-    restore_value: no
-  - id: g_co
-    type: float
-    restore_value: no
-  - id: g_o3
-    type: float
-    restore_value: no
-  - id: g_no2
-    type: float
-    restore_value: no
-  - id: g_data_valid
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
 text_sensor:
-  - platform: template
-    id: sender_mac
-    name: "Last ESP-NOW Sender"
-    internal: true
   - platform: template
     id: last_update_time
     name: "Last Update Time"
@@ -228,8 +241,8 @@ binary_sensor:
 time:
   - platform: sntp
     id: esptime
-    timezone: "CET-1CEST,M3.5.0,M10.5.0/3"
-    servers: pool.ntp.org                
+    timezone: "BRT3BRST,M10.3.0/0,M2.3.0/0"
+    servers: south-america.pool.ntp.org               
 
 switch:
   - platform: gpio
@@ -238,19 +251,41 @@ switch:
     name: "EPD Power"
     restore_mode: ALWAYS_ON
 
-espnow_receiver:
-  pm_1_0: g_pm1_0
-  pm_2_5: g_pm2_5
-  pm_10_0: g_pm10
-  co2: g_co2
-  voc: g_voc
-  temperature: g_temperature
-  humidity: g_humidity
-  ch2o: g_ch2o
-  co: g_co
-  ozone: g_o3
-  no2: g_no2
-  valid: g_data_valid
-
-
+    
+sensor:
+  # weather
+  - platform: homeassistant
+    name: "estacao_do_ar_temperatura_ea"
+    entity_id: sensor.estacao_do_ar_temperatura_ea
+    id: temperatureEA
+    
+  - platform: homeassistant
+    name: "TempFora"
+    entity_id: sensor.tz3000_1twfmkcc_ts0201_temperatura
+    id: TempFora
+    
+  - platform: homeassistant
+    name: "estacao_do_ar_umidade_ea"
+    entity_id: sensor.estacao_do_ar_umidade_ea
+    id: UmidadeEA
+    
+  - platform: homeassistant
+    name: "UmiFora"
+    entity_id: sensor.tz3000_1twfmkcc_ts0201_umidade
+    id: UmiFora
+    
+  - platform: homeassistant
+    name: "estacao_do_ar_temperatura_ea"
+    entity_id: sensor.estacao_do_ar_co2_ea
+    id: co2_ea
+    
+interval:
+  - interval: 10s
+    then: 
+      - lambda: |
+            ESP_LOGI("log", "temperatureEA: %f", id(temperatureEA).state);
+            ESP_LOGI("log", "TempFora: %f", id(TempFora).state);
+            ESP_LOGI("log", "UmidadeEA: %f", id(UmidadeEA).state);
+            ESP_LOGI("log", "UmiFora: %f", id(UmiFora).state);
+            ESP_LOGI("log", "co2_ea: %f", id(co2_ea).state);
  
