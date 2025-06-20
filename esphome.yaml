@@ -194,10 +194,32 @@ display:
       #define ICON_Humidade         "\U000F058E"
       #define ICON_CO2              "\U000F07E4"
       
-      int x_Temp = -11;
-      int y_Temp = 50;
-      int y_Offset_Humi = 50;
-      int y_Offset_CO2 = 40;
+      #define ICON_clear_night      "\U000F0594" 
+      #define ICON_cloudy           "\U000F0590" 
+      #define ICON_fog              "\U000F0591" 
+      #define ICON_hail             "\U000F0592" 
+      #define ICON_lightning        "\U000F0593" 
+      #define ICON_lightning_rainy  "\U000F067E" 
+      #define ICON_night_partly_cloudy "\U000F0F31" 
+      #define ICON_partly_cloudy    "\U000F0595" 
+      #define ICON_pouring          "\U000F0596" 
+      #define ICON_rainy            "\U000F0597" 
+      #define ICON_snowy            "\U000F0F36" 
+      #define ICON_snowy_rainy      "\U000F067F" 
+      #define ICON_sunny            "\U000F0599" 
+      #define ICON_windy            "\U000F059D" 
+      #define ICON_windy_variant    "\U000F059E" 
+      #define ICON_exceptional      "\U000F0F38" 
+      
+      int Alin_x_1 = 30;
+      int Alin_x_2 = Alin_x_1+70;
+      int Alin_x_3 = Alin_x_2+70;
+      int Alin_x_4 = Alin_x_3+70;
+      
+      int Alin_y_1 = 22;
+      int Alin_y_2 = Alin_y_1+45;
+      int Alin_y_3 = Alin_y_2+45;
+      int Alin_y_4 = Alin_y_3+45;
       
       it.rectangle(0, 0, it.get_width(), it.get_height()-1);
       
@@ -205,34 +227,67 @@ display:
       it.strftime(it.get_width(), 0, id(font_medium), TextAlign::RIGHT, "%H:%M", time);
       
       
-      it.printf(x_Temp+50, 5, id(font_icons), TextAlign::LEFT, ICON_Casa); 
-      it.printf(x_Temp+140, 5, id(font_icons), TextAlign::LEFT, ICON_Fora); 
+      it.printf(Alin_x_2, Alin_y_1, id(font_icons), TextAlign::CENTER, ICON_Casa); 
+      it.printf(Alin_x_3, Alin_y_1, id(font_icons), TextAlign::CENTER, ICON_Fora); 
       
-      it.printf(x_Temp, y_Temp-3, id(font_icons_small), TextAlign::LEFT, ICON_temp_high); 
-      it.printf(x_Temp+50, y_Temp, id(font_small), TextAlign::LEFT, "%.1f", id(temperatureEA).state);// °C
-      it.printf(x_Temp+135, y_Temp, id(font_small), TextAlign::LEFT, "%.1f", id(TempFora).state);
+      it.printf(Alin_x_1, Alin_y_2, id(font_icons_small), TextAlign::CENTER, ICON_temp_high); 
+      it.printf(Alin_x_2, Alin_y_2, id(font_small), TextAlign::CENTER, "%.1f", id(temperatureEA).state);// °C
+      it.printf(Alin_x_3, Alin_y_2, id(font_small), TextAlign::CENTER, "%.1f", id(TempFora).state);
       
-      it.printf(x_Temp+3, y_Temp-5+y_Offset_Humi, id(font_icons), TextAlign::LEFT, ICON_Humidade); 
-      it.printf(x_Temp+65, y_Temp+y_Offset_Humi, id(font_small), TextAlign::LEFT, "%.0f", id(UmidadeEA).state);// °C
-      it.printf(x_Temp+150, y_Temp+y_Offset_Humi, id(font_small), TextAlign::LEFT, "%.0f", id(UmiFora).state);
+      it.printf(Alin_x_1, Alin_y_3, id(font_icons), TextAlign::CENTER, ICON_Humidade); 
+      it.printf(Alin_x_2, Alin_y_3, id(font_small), TextAlign::CENTER, "%.0f", id(UmidadeEA).state);// °C
+      it.printf(Alin_x_3, Alin_y_3, id(font_small), TextAlign::CENTER, "%.0f", id(UmiFora).state);
       
-      it.printf(x_Temp+10, y_Temp-5+y_Offset_Humi+y_Offset_CO2, id(font_icons_small), TextAlign::LEFT, ICON_CO2); 
-      it.printf(x_Temp+65, y_Temp+y_Offset_Humi+y_Offset_CO2, id(font_small), TextAlign::LEFT, "%.0f", id(co2_ea).state);// °C
-      it.printf(x_Temp+150, y_Temp+y_Offset_Humi+y_Offset_CO2, id(font_small), TextAlign::LEFT, "%.0f", 0);
+      it.printf(Alin_x_1, Alin_y_4, id(font_icons_small), TextAlign::CENTER, ICON_CO2); 
+      it.printf(Alin_x_2, Alin_y_4, id(font_small), TextAlign::CENTER, "%.0f", id(co2_ea).state);// °C
+      it.printf(Alin_x_3, Alin_y_4, id(font_small), TextAlign::CENTER, "%.0f", 0);
       
+      
+      
+      auto ICON_Tempo = "";
+      auto weather_state_cstr = forecast_home->state.c_str();
+      
+      if (strcmp(weather_state_cstr, "clear-night") == 0) {
+          ICON_Tempo = ICON_clear_night;
+      } else if (strcmp(weather_state_cstr, "cloudy") == 0) {
+          ICON_Tempo = ICON_cloudy;
+      } else if (strcmp(weather_state_cstr, "fog") == 0) {
+          ICON_Tempo = ICON_fog;
+      } else if (strcmp(weather_state_cstr, "hail") == 0) {
+          ICON_Tempo = ICON_hail;
+      } else if (strcmp(weather_state_cstr, "lightning") == 0) {
+          ICON_Tempo = ICON_lightning;
+      } else if (strcmp(weather_state_cstr, "lightning-rainy") == 0) {
+          ICON_Tempo = ICON_lightning_rainy;
+      } else if (strcmp(weather_state_cstr, "partlycloudy") == 0) { 
+          ICON_Tempo = ICON_partly_cloudy;
+      } else if (strcmp(weather_state_cstr, "pouring") == 0) {
+          ICON_Tempo = ICON_pouring;
+      } else if (strcmp(weather_state_cstr, "rainy") == 0) {
+          ICON_Tempo = ICON_rainy;
+      } else if (strcmp(weather_state_cstr, "snowy") == 0) {
+          ICON_Tempo = ICON_snowy;
+      } else if (strcmp(weather_state_cstr, "snowy-rainy") == 0) {
+          ICON_Tempo = ICON_snowy_rainy;
+      } else if (strcmp(weather_state_cstr, "sunny") == 0) {
+          ICON_Tempo = ICON_sunny;
+      } else if (strcmp(weather_state_cstr, "windy") == 0) {
+          ICON_Tempo = ICON_windy;
+      } else if (strcmp(weather_state_cstr, "windy-variant") == 0) {
+          ICON_Tempo = ICON_windy_variant;
+      } else if (strcmp(weather_state_cstr, "exceptional") == 0) {
+          ICON_Tempo = ICON_exceptional;
+      } else {
+          ESP_LOGW("clima", "Condição climática desconhecida: %s", weather_state_cstr);
+      }
+      it.printf(Alin_x_4, Alin_y_1, id(font_icons_small), TextAlign::CENTER, ICON_Tempo); 
       
      
 
 globals:
   - id: g_pm1_0
     type: int
-
-text_sensor:
-  - platform: template
-    id: last_update_time
-    name: "Last Update Time"
-    internal: true
-
+    
 binary_sensor:
   - platform: status
     id: wifi_connected_status
@@ -279,6 +334,16 @@ sensor:
     entity_id: sensor.estacao_do_ar_co2_ea
     id: co2_ea
     
+
+text_sensor:
+  - platform: homeassistant
+    name: "forecast_home"
+    entity_id: weather.forecast_home
+    internal: true # Torna o sensor interno se você não quiser que ele apareça no Home Assistant novamente
+    id: forecast_home
+    
+    
+    
 interval:
   - interval: 10s
     then: 
@@ -288,4 +353,5 @@ interval:
             ESP_LOGI("log", "UmidadeEA: %f", id(UmidadeEA).state);
             ESP_LOGI("log", "UmiFora: %f", id(UmiFora).state);
             ESP_LOGI("log", "co2_ea: %f", id(co2_ea).state);
+            ESP_LOGI("log", "Previsão do tempo: %s", forecast_home->state.c_str());
  
