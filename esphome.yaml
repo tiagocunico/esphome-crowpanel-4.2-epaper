@@ -37,6 +37,11 @@ wifi:
 
 font:
   - file: 'fonts/OpenSans-Medium.ttf'
+    id: font_smallest
+    size: 18
+    glyphs: |-
+      !"%()+=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'/&|ÁÉÍÓÖŐÚÜŰáéíóöőúüű
+  - file: 'fonts/OpenSans-Medium.ttf'
     id: font_small
     size: 28
     glyphs: |-
@@ -146,6 +151,8 @@ font:
       - "\U000F0E7C" # baby-face
       - "\U000F0379" # monitor
       - "\U000F07E4" # CO2
+      - "\U000F05D6" # Error
+      
       
       
   - file: 'fonts/materialdesignicons-webfont.ttf'
@@ -172,7 +179,6 @@ display:
     full_update_every: 60
     rotation: 180
     lambda: |-
-    
       // icon constants
       #define ICON_temp_high        "\U000F10C2"
       #define ICON_temp_low         "\U000F10C3"
@@ -211,6 +217,9 @@ display:
       #define ICON_windy_variant    "\U000F059E" 
       #define ICON_exceptional      "\U000F0F38" 
       
+      #define ICON_Error            "\U000F05D6" 
+      
+      
       int Alin_x_1 = 30;
       int Alin_x_2 = Alin_x_1+70;
       int Alin_x_3 = Alin_x_2+70;
@@ -220,6 +229,9 @@ display:
       int Alin_y_2 = Alin_y_1+45;
       int Alin_y_3 = Alin_y_2+45;
       int Alin_y_4 = Alin_y_3+45;
+      int Alin_y_5 = Alin_y_4+45;
+      int Alin_y_6 = Alin_y_5+20;
+      int Alin_y_7 = Alin_y_6+20;
       
       it.rectangle(0, 0, it.get_width(), it.get_height()-1);
       
@@ -233,14 +245,15 @@ display:
       it.printf(Alin_x_1, Alin_y_2, id(font_icons_small), TextAlign::CENTER, ICON_temp_high); 
       it.printf(Alin_x_2, Alin_y_2, id(font_small), TextAlign::CENTER, "%.1f", id(temperatureEA).state);// °C
       it.printf(Alin_x_3, Alin_y_2, id(font_small), TextAlign::CENTER, "%.1f", id(TempFora).state);
+      it.printf(Alin_x_4, Alin_y_2, id(font_small), TextAlign::CENTER, "%.1f", id(forecast_current_temp).state);
       
       it.printf(Alin_x_1, Alin_y_3, id(font_icons), TextAlign::CENTER, ICON_Humidade); 
       it.printf(Alin_x_2, Alin_y_3, id(font_small), TextAlign::CENTER, "%.0f", id(UmidadeEA).state);// °C
       it.printf(Alin_x_3, Alin_y_3, id(font_small), TextAlign::CENTER, "%.0f", id(UmiFora).state);
+      it.printf(Alin_x_4, Alin_y_3, id(font_small), TextAlign::CENTER, "%.0f", id(forecast_current_humidity).state);
       
       it.printf(Alin_x_1, Alin_y_4, id(font_icons_small), TextAlign::CENTER, ICON_CO2); 
       it.printf(Alin_x_2, Alin_y_4, id(font_small), TextAlign::CENTER, "%.0f", id(co2_ea).state);// °C
-      it.printf(Alin_x_3, Alin_y_4, id(font_small), TextAlign::CENTER, "%.0f", 0);
       
       
       
@@ -278,12 +291,18 @@ display:
       } else if (strcmp(weather_state_cstr, "exceptional") == 0) {
           ICON_Tempo = ICON_exceptional;
       } else {
+          ICON_Tempo = ICON_Error;
           ESP_LOGW("clima", "Condição climática desconhecida: %s", weather_state_cstr);
       }
       it.printf(Alin_x_4, Alin_y_1, id(font_icons_small), TextAlign::CENTER, ICON_Tempo); 
       
-     
-
+      
+      it.printf(5, Alin_y_5, id(font_smallest), TextAlign::LEFT, "%s", Evento1->state.c_str());
+      it.printf(5, Alin_y_6, id(font_smallest), TextAlign::LEFT, "%s", Evento2->state.c_str());
+      it.printf(5, Alin_y_7, id(font_smallest), TextAlign::LEFT, "%s", Evento3->state.c_str());
+      
+      
+      
 globals:
   - id: g_pm1_0
     type: int
@@ -315,33 +334,68 @@ sensor:
     id: temperatureEA
     
   - platform: homeassistant
-    name: "TempFora"
-    entity_id: sensor.tz3000_1twfmkcc_ts0201_temperatura
-    id: TempFora
-    
-  - platform: homeassistant
     name: "estacao_do_ar_umidade_ea"
     entity_id: sensor.estacao_do_ar_umidade_ea
     id: UmidadeEA
-    
-  - platform: homeassistant
-    name: "UmiFora"
-    entity_id: sensor.tz3000_1twfmkcc_ts0201_umidade
-    id: UmiFora
     
   - platform: homeassistant
     name: "estacao_do_ar_temperatura_ea"
     entity_id: sensor.estacao_do_ar_co2_ea
     id: co2_ea
     
+  - platform: homeassistant
+    name: "TempFora"
+    entity_id: sensor.tz3000_1twfmkcc_ts0201_temperatura
+    id: TempFora
+    
+  - platform: homeassistant
+    name: "UmiFora"
+    entity_id: sensor.tz3000_1twfmkcc_ts0201_umidade
+    id: UmiFora
+    
+    # Puxa previsao do tempo
+  - platform: homeassistant
+    name: "Previsao Temperatura Atual"
+    entity_id: weather.Casa
+    attribute: "temperature"
+    id: forecast_current_temp
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    
+  - platform: homeassistant
+    name: "Umidade Ambiente HA"
+    entity_id: weather.Casa
+    attribute: "humidity"
+    id: forecast_current_humidity
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    
 
 text_sensor:
   - platform: homeassistant
     name: "forecast_home"
-    entity_id: weather.forecast_home
-    internal: true # Torna o sensor interno se você não quiser que ele apareça no Home Assistant novamente
+    entity_id: weather.Casa
+    internal: true 
     id: forecast_home
     
+  - platform: homeassistant
+    name: "Evento1"
+    entity_id: input_text.eventoesp_1
+    internal: true
+    id: Evento1
+    
+  - platform: homeassistant
+    name: "Evento2"
+    entity_id: input_text.eventoesp_2
+    internal: true
+    id: Evento2
+    
+  - platform: homeassistant
+    name: "Evento3"
+    entity_id: input_text.eventoesp_3
+    internal: true
+    id: Evento3
+      
     
     
 interval:
@@ -354,4 +408,9 @@ interval:
             ESP_LOGI("log", "UmiFora: %f", id(UmiFora).state);
             ESP_LOGI("log", "co2_ea: %f", id(co2_ea).state);
             ESP_LOGI("log", "Previsão do tempo: %s", forecast_home->state.c_str());
+            ESP_LOGI("log", "Previsão do tempo Temp: %f", id(forecast_current_temp).state);
+            ESP_LOGI("log", "Previsão do tempo Umi: %f", id(forecast_current_humidity).state);
+            ESP_LOGI("log", "Evento1: %s", Evento1->state.c_str());
+            ESP_LOGI("log", "Evento2: %s", Evento2->state.c_str());
+            ESP_LOGI("log", "Evento3: %s", Evento3->state.c_str());
  
